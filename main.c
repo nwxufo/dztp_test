@@ -12,12 +12,13 @@
 #include <sys/ioctl.h>
 #include <sys/termios.h>
 
-#include "serial_dev.c"
+#include "serial_dev.h"
 
 #define DEBUG
 #define DEV_NAME "/dev/ttyS0"
 #define BUF_LEN 204 // dzt_protocol's max length.
 #define BUF_PARAM 199 //MAX protocol's parameter.
+
 
 struct cmd_param {
 	int len;
@@ -42,6 +43,7 @@ struct msg_cmd {
 
 static int fd = 0; //tty devices file descriptor
 
+static void dzt_proto_printer( struct dzt_protocol dztp ) ;
 static struct dzt_protocol msg_translator( const char *msg )
 {
 	struct dzt_protocol dztp;
@@ -59,7 +61,6 @@ static struct dzt_protocol msg_translator( const char *msg )
 	}
 	dztp.checkout = msg[4+i];//TODO: jiaoyan
 	dztp.end = msg[4+i+1];
-
 	return dztp;
 }
 
@@ -74,11 +75,13 @@ static void dzt_proto_printer( struct dzt_protocol dztp )
 	int j = 0 ;
 	while ( j < i ) {
 		printf("%.4x ", dztp.param.param[j]);
+		j++;
 	}
 
 	printf("%.4x ", dztp.checkout);
-	printf("%.4x ", dztp.end);
+	printf("%c", dztp.end);
 	printf("\n");
+
 }
 
 static void response_recovery_msg() {

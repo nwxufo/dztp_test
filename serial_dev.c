@@ -37,7 +37,7 @@ static void init_serial(int fd)
 	//return fd;
 }
 
-extern int open_tty(const char *dev_name)
+extern int open_tty(const char *dev_path)
 {
 	int file_desc;
 	file_desc = open(dev_name, O_RDWR | O_NOCTTY /*|O_NONBLOCK*/);
