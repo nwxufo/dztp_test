@@ -12,7 +12,7 @@
 #include <sys/ioctl.h>
 #include <sys/termios.h>
 
-#include "serial_dev.h"
+#include "serial_dev.c"
 
 #define DEBUG
 #define DEV_NAME "/dev/ttyS0"

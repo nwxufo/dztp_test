@@ -40,9 +40,9 @@ static void init_serial(int fd)
 extern int open_tty(const char *dev_path)
 {
 	int file_desc;
-	file_desc = open(dev_name, O_RDWR | O_NOCTTY /*|O_NONBLOCK*/);
+	file_desc = open(dev_path, O_RDWR | O_NOCTTY /*|O_NONBLOCK*/);
 		if ( file_desc < 0 ) {
-			printf(" Cannot open device %s! \n",dev_name);
+			printf(" Cannot open device %s! \n",dev_path);
 			printf(" 提示，设备读写需要权限！\n");
 			exit( -1 );
 		}
