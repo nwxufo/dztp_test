@@ -34,17 +34,17 @@ struct dzt_protocol{
 	unsigned char checkout;
 	unsigned char end;
 };
-/*
-struct msg_cmd {
-	recv_cmd_type type;
-	int fd;
-};
-*/
 
-static int fd = 0; //tty devices file descriptor
+enum recv_cmd_type  {RECOVERY,VERSION_CHECK,OPERATION,CHECKOUT};
+struct response_struct {
+	enum recv_cmd_type type;
+	int fd;		//tty devices file descriptor
+	struct dzt_protocol dztp;
+};
+
 
 static void dzt_proto_printer( struct dzt_protocol dztp ) ;
-static struct dzt_protocol msg_translator( const char *msg )
+static struct dzt_protocol msg_to_protocol_struct( const char *msg )
 {
 	struct dzt_protocol dztp;
 	/* encapsulation the msg to protocol struct. */
@@ -61,7 +61,9 @@ static struct dzt_protocol msg_translator( const char *msg )
 	}
 	dztp.checkout = msg[4+i];//TODO: jiaoyan
 	dztp.end = msg[4+i+1];
+
 	return dztp;
+	
 }
 
 static void dzt_proto_printer( struct dzt_protocol dztp ) 
@@ -84,7 +86,7 @@ static void dzt_proto_printer( struct dzt_protocol dztp )
 
 }
 
-static void response_recovery_msg() {
+static void msg_response_recovery(int fd) {
 	unsigned int isSucceed = 1;
 	unsigned char msg_res[7];
 		msg_res[0] = 0x3c;
@@ -101,22 +103,49 @@ static void response_recovery_msg() {
 		msg_res[6] = 0x3E;
 	write(fd, msg_res, 7);	
 }
-static void response_version_msg() 
+static void msg_response_version() 
 {
 	printf("reviced checkout version message !\n");
 }
 
-static void  msg_processor(const char* msg)
+static struct response_struct init_response_struct( int fd, const char* msg )
 {
-	struct dzt_protocol dztp;
-	dztp = msg_translator(msg);
-	dzt_proto_printer( dztp );
-	if ( 0x05 == dztp.cmd & 0x05 ) { // device repositon
-		response_recovery_msg();
-	} else if ( 0x81 == dztp.cmd ) {
-		response_version_msg();
-	} else if ( 0xA0 == dztp.cmd & 0xA0 ) {
-		response_checkout_msg();
+	struct response_struct res_obj;
+	res_obj.fd = fd;
+	res_obj.dztp = msg_to_protocol_struct(msg);
+	if ( 0x05 == res_obj.dztp.cmd ) {
+		res_obj.type = RECOVERY;
+	} else 
+	if ( 0x81 == res_obj.dztp.cmd ) {
+		res_obj.type = VERSION_CHECK; 
+	} else
+	if ( 0x50 == res_obj.dztp.cmd & 0x50 ) {
+		res_obj.type = OPERATION;
+	} else 
+	if ( 0xA0 == res_obj.dztp.cmd & 0xA0 ) {
+		res_obj.type = CHECKOUT;
+	} else {
+		printf( "cmd unrecognised !\n" );
+		//TODO:print it!
+		exit(-1);
+	}
+
+	return res_obj;
+}
+
+static void  msg_processor(int fd, const char* msg)
+{
+	//struct dzt_protocol dztp;
+	struct response_struct res_obj; 
+	res_obj = init_response_struct( fd, msg);
+	//dztp = msg_translator(res_obj,msg);
+	dzt_proto_printer( res_obj.dztp );
+	if ( 0x05 == res_obj.dztp.cmd & 0x05 ) { // device repositon
+		msg_response_recovery(res_obj.fd);
+	} else if ( 0x81 == res_obj.dztp.cmd ) {
+		msg_response_version();
+	} else if ( 0xA0 == res_obj.dztp.cmd & 0xA0 ) {
+		msg_response_checkout();
 	} else {
 		printf("received cmd unrecognizable !\n");
 	}
@@ -125,15 +154,13 @@ static void  msg_processor(const char* msg)
 void main(int argc, char *argv[])
 {
 	char message[BUF_LEN];
-
-	const char * dev = DEV_NAME; 
-	fd = open_tty(dev);
+	int fd =  open_tty(DEV_NAME);
 
 	while(1){
-		int ret_val = read(fd,message,BUF_LEN);
+		int ret_val = read(fd, message, BUF_LEN);
 
 		printf("message length: %d bytes\n", ret_val);
 
-		msg_processor(message);
+		msg_processor(fd,message);
 	}
 }	
