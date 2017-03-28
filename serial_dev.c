@@ -15,13 +15,14 @@ static void init_serial(int fd)
 		ios.c_iflag = 0;
 		ios.c_oflag = 0;
 		ios.c_lflag = 0;
-		ios.c_cc[VMIN] = 1;
-		ios.c_cc[VTIME] = 10;
+		ios.c_cc[VMIN] = 1;	//min dzt proto character len.
+		ios.c_cc[VTIME] = 0; 
 		ios.c_cflag &= ~CSIZE;
 		ios.c_cflag |= CS8;
 		ios.c_cflag &= ~CSTOPB;
 		ios.c_cflag &= ~PARENB;
 		ios.c_iflag &= ~INPCK;
+		ios.c_iflag &= ~ICANON;	//使用 非规范模式
 	int ret = tcsetattr ( fd, TCSANOW, &ios );
 		tcflush(fd, TCIOFLUSH);
 

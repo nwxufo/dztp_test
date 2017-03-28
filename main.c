@@ -35,7 +35,7 @@ struct dzt_protocol{
 	unsigned char end;
 };
 
-enum recv_cmd_type  {RECOVERY,VERSION_CHECK,OPERATION,CHECKOUT};
+enum recv_cmd_type  {RECOVERY,VERSION_CHECK,SETTING,CHECKOUT};
 struct response_struct {
 	enum recv_cmd_type type;
 	int fd;		//tty devices file descriptor
@@ -63,6 +63,19 @@ static struct dzt_protocol init_dzt_protocol( const char *msg )
 	return dztp;
 }
 
+static void msg_printer(const char* msg) 
+{
+	printf("%c ",msg[0]);
+	printf("%.4x ", msg[1]);
+	int len = (int)msg[1];
+	int i = 0;
+	while( i< len ) {
+		printf("%.4x ",msg[i+2]);
+		i++;
+	}
+	printf("%c\n", msg[len+2]);
+}
+
 static void dzt_proto_printer( struct dzt_protocol dztp ) 
 {
 	printf("%c ", dztp.head);
@@ -80,7 +93,6 @@ static void dzt_proto_printer( struct dzt_protocol dztp )
 	printf("%.4x ", dztp.checkout);
 	printf("%c", dztp.end);
 	printf("\n");
-
 }
 
 static void msg_response_recovery(struct response_struct res_obj) {
@@ -104,9 +116,9 @@ static void msg_response_version(struct response_struct res_obj)
 {
 	printf("reviced version request  message !\n");
 }
-static void msg_response_operation(struct response_struct res_obj)
+static void msg_response_setting(struct response_struct res_obj)
 {
-	printf("reviced operation message !\n");
+	printf("reviced setting message !\n");
 }
 static void msg_response_checkout(struct response_struct res_obj)
 {
@@ -116,7 +128,7 @@ static void msg_response_checkout(struct response_struct res_obj)
 void (*msg_response_tbl[])(struct response_struct) = {
 	msg_response_recovery,
 	msg_response_version,
-	msg_response_operation,
+	msg_response_setting,
 	msg_response_checkout
 };
 #define msg_response(z) msg_response_tbl[z.type](z)
@@ -133,26 +145,15 @@ static struct response_struct init_response_struct( int fd, const char* msg )
 		res_obj.type = VERSION_CHECK; 
 	} else
 	if ( 0x50 == (res_obj.dztp.cmd & 0x50) ) {
-		res_obj.type = OPERATION;
+		res_obj.type = SETTING;
 	} else 
 	if ( 0xA0 == ( res_obj.dztp.cmd & 0xA0 ) ) {
 		res_obj.type = CHECKOUT;
 	} else {
 		printf( "cmd unrecognised !\n" );
-		//protocol_crc(msg);
-#ifdef DEBUG
-		printf("cmd & 0xA0: %.04x\n", res_obj.dztp.cmd & 0xA0 );
-#endif
+		//TODO:protocol_crc(msg);
 		//print it!
-		printf("%c ",msg[0]);
-		printf("%.4x ", msg[1]);
-		int len = (int)msg[1];
-		int i = 0;
-		while( i< len ) {
-			printf("%.4x ",msg[i+2]);
-			i++;
-		}
-		printf("%c\n", msg[len+2]);
+		msg_printer(msg);
 		//dzt protocol printer.
 		dzt_proto_printer(res_obj.dztp);
 		exit(-1);
@@ -163,6 +164,7 @@ static struct response_struct init_response_struct( int fd, const char* msg )
 
 static void  msg_processor(int fd, const char* msg)
 {
+	msg_printer(msg);
 	//struct dzt_protocol dztp;
 	struct response_struct res_obj; 
 	res_obj = init_response_struct( fd, msg);
@@ -171,16 +173,48 @@ static void  msg_processor(int fd, const char* msg)
 
 	msg_response(res_obj);
 }
+
+static void msg_printer_raw(const char* msg, int len)
+{
+	int i = 0;
+	while( i< len){
+		//printf("%.4x ",msg[i]);
+		printf("%.4x,%ld ",msg[i],sizeof(msg[i]));
+		++i;
+	}
+	printf("\n");
+}
+static int get_msg(int fd, char *msg, int msg_buf)
+{
+	int len, msg_tail;
+	msg_tail = len = 0; 
+
+	char buf[BUF_LEN];
+	char tail;
+	while(msg_tail< msg_buf) {
+		len = read(fd,buf,msg_buf);
+		tail = buf[len-1];
+		
+		// append buf to msg.
+		int j = 0;
+		for(j;j<len;j++,msg_tail++)
+			msg[msg_tail] = buf[j];
+		msg_printer_raw(msg,msg_tail);
+		if ( (tail & 0x3e) == 0x3e )
+			return msg_tail; // return msg length.
+	}
+
+	return -1;
+}
 void main(int argc, char *argv[])
 {
 	char message[BUF_LEN];
 	int fd =  open_tty(DEV_NAME);
+	
+	int ret_val = get_msg(fd,message,BUF_LEN); 
 
-	while(1){
-		int ret_val = read(fd, message, BUF_LEN);
+	printf("message length: %d bytes\n", ret_val);
 
-		printf("message length: %d bytes\n", ret_val);
-
-		msg_processor(fd,message);
-	}
+	msg_processor(fd,message);
+	
 }	
