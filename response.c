@@ -8,9 +8,6 @@
 #include "response.h"
 #include "stdlib.h"
 
-
-
-
 extern struct dzt_protocol init_dzt_protocol(const char* msg);
 extern void dzt_proto_printer( struct dzt_protocol dztp ) ;
 
@@ -66,9 +63,48 @@ static void msg_printer_format(const char* msg)
 	printf("%c\n", msg[len+2]);
 }
 
+/* response_pram_recovery */
+static struct cmd_param response_param_recovery = {
+	.len = 1,
+	.param = {0x55},
+};
+/* response_param_version */
+static struct cmd_param response_param_version = {
+	.len = 14,
+	.param = {0x02,0x2c,0x01,0x2c,0x01,0x2c,0x01,0x2c,0x01,0x02,
+		0x12,0x34,0x56,0x78},
+};
+/* response_param_setting */
+static struct cmd_param response_param_setting = {
+	.len = 1,
+	.param = {0x55},
+};
 
+/*TODO: response_param_checkout */
+static struct cmd_param response_param_checkout = {
+	.len = 10,
+	.param = "UNFINISHED",
+};
+
+static void dzt_protocol_to_msg(const struct dzt_protocol dztp, unsigned char* msg)
+{
+	 msg[0] = dztp.head;
+	 msg[1] = dztp.length;
+	 msg[2] = dztp.addr;
+	 msg[3] = dztp.cmd;
+	 int i = 0;
+	 int msg_index = 4;
+	 for(i;i<dztp.param.len;i++) {
+		 msg[msg_index] = dztp.param.param[i];
+		 ++msg_index;++i;
+	 }	
+	 msg[msg_index] = dztp.checkout;
+	 msg[msg_index+1] = dztp.end;
+
+}
 static void msg_response_recovery(struct response_struct res_obj)
 {
+	/* this code is ok,but old.
 	unsigned int isSucceed = 1;
 	unsigned char msg_res[7];
 		msg_res[0] = 0x3c;
@@ -83,19 +119,31 @@ static void msg_response_recovery(struct response_struct res_obj)
 			msg_res[5] = 0xB3;
 		}
 		msg_res[6] = 0x3E;
-	write(res_obj.fd, msg_res, 7);	
+	*/
+	/* param */
+	res_obj.dztp.param = response_param_recovery;
+	/* TODO:CRC */
+	res_obj.dztp.checkout = 0x5e;
+	/* transmit it. */
+	int msg_len = res_obj.dztp.param.len +6;
+	unsigned char msg[msg_len];
+	dzt_protocol_to_msg(res_obj.dztp,msg);
+
+	printf("received recovery message !");
+	msg_printer_format(msg);
+	write(res_obj.fd,msg,msg_len);	
 }
 static void msg_response_version(struct response_struct res_obj) 
 {
-	printf("reviced version request  message !\n");
+	printf("received version request  message !\n");
 }
 static void msg_response_setting(struct response_struct res_obj)
 {
-	printf("reviced setting message !\n");
+	printf("received setting message !\n");
 }
 static void msg_response_checkout(struct response_struct res_obj)
 {
-	printf("reviced checkout message !\n");
+	printf("received checkout message !\n");
 }
 void (*msg_response_tbl[])(struct response_struct) = {
 	msg_response_recovery,

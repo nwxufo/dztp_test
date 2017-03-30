@@ -67,8 +67,10 @@ void main(int argc, char *argv[])
 	char message[BUF_LEN];
 	int fd =  open_tty(DEV_NAME);
 	
+	while(1) {
 	int ret_val = get_msg(fd,message,BUF_LEN); 
 	printf("message length: %d bytes\n", ret_val);
 
 	msg_processor(fd,message);
+	}
 }	
