@@ -23,6 +23,7 @@ struct dzt_protocol{
 	unsigned char checkout;
 	unsigned char end;
 };
+
 enum recv_cmd_type  {RECOVERY,VERSION_CHECK,SETTING,CHECKOUT};
 struct response_struct {
 	enum recv_cmd_type type;
@@ -34,8 +35,10 @@ extern void msg_response_recovery(struct response_struct res_obj);
 extern void msg_response_version(struct response_struct res_obj);
 extern void msg_response_setting(struct response_struct res_obj);
 extern void msg_response_checkout(struct response_struct res_obj);
-*/
+
 extern void (*msg_response_tbl[])(struct response_struct);
 #define msg_response(z) msg_response_tbl[z.type](z)
-extern void  msg_processor(int fd, const char* msg);
+*/
+extern void msg_printer_raw(const unsigned char* msg, int len);
+extern void  msg_processor(const int fd, const unsigned char* msg);
 #endif

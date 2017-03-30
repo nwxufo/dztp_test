@@ -7,11 +7,8 @@
 
 #include "response.h"
 #include "stdlib.h"
-
-extern struct dzt_protocol init_dzt_protocol(const char* msg);
-extern void dzt_proto_printer( struct dzt_protocol dztp ) ;
-
-extern struct dzt_protocol init_dzt_protocol( const char *msg )
+#define DEBUG
+extern struct dzt_protocol init_dzt_protocol( const unsigned char *msg )
 {
 	struct dzt_protocol dztp;
 	/* encapsulation the msg to protocol struct. */
@@ -50,7 +47,7 @@ extern void dzt_proto_printer( struct dzt_protocol dztp )
 	printf("%c", dztp.end);
 	printf("\n");
 }
-static void msg_printer_format(const char* msg) 
+static void msg_printer_format(const unsigned char* msg) 
 {
 	printf("%c ",msg[0]);
 	printf("%.4x ", msg[1]);
@@ -61,6 +58,16 @@ static void msg_printer_format(const char* msg)
 		i++;
 	}
 	printf("%c\n", msg[len+2]);
+}
+extern void msg_printer_raw(const unsigned char* msg, int len)
+{
+	int i = 0;
+	while( i< len){
+		printf("%.4x ",msg[i]);
+		//printf("%.4x,%ld ",msg[i],sizeof(msg[i]));
+		++i;
+	}
+	printf("\n");
 }
 
 /* response_pram_recovery */
@@ -78,9 +85,16 @@ static struct cmd_param get_response_param_version()
 {
 	struct cmd_param response_param_version = {
 		.len = 14,
-		.param = {0x02,0x2c,0x01,0x2c,0x01,0x2c,0x01,0x2c,0x01,0x02,
+		.param = {0x02,0x2c,0x01,0x2c,0x01,0x2c,0x01,0x2c,0x01,0x2c,
 			0x12,0x34,0x56,0x78},
 	};
+#ifdef DEBUG
+	int i = 0;
+	for(i;i<response_param_version.len;++i) {
+		printf("param_version:%.2x",response_param_version.param[i]);
+	}
+	printf("\n");
+#endif
 
 	return response_param_version;
 }
@@ -119,13 +133,14 @@ static void dzt_protocol_to_msg(const struct dzt_protocol dztp, unsigned char* m
 	 msg[3] = dztp.cmd;
 	 int i = 0;
 	 int msg_index = 4;
-	 for(i;i<dztp.param.len;i++) {
+	 for(i;i<dztp.param.len;i++,msg_index++) 
 		 msg[msg_index] = dztp.param.param[i];
-		 ++msg_index;++i;
-	 }	
+	 	
 	 msg[msg_index] = dztp.checkout;
 	 msg[msg_index+1] = dztp.end;
-
+#ifdef DEBUG
+	msg_printer_raw(msg,msg_index+2);
+#endif
 }
 static struct response_struct init_response_struct( int fd, const char* msg )
 {
@@ -150,7 +165,18 @@ static struct response_struct init_response_struct( int fd, const char* msg )
 
 	return res_obj;
 }
-extern void  msg_processor(int fd, const char* msg_recv)
+static unsigned char get_crc(const unsigned char* msg, const int len)
+{
+	unsigned char ret_crc = 0x00;
+	int i = 1;
+
+	for ( i; i < len - 2; i++) {
+		ret_crc += msg[i];
+	}
+
+	return ret_crc;
+}
+void  msg_processor(int fd, const unsigned char* msg_recv)
 {
 	struct response_struct res_obj; 
 	res_obj = init_response_struct(fd, msg_recv);
@@ -158,17 +184,16 @@ extern void  msg_processor(int fd, const char* msg_recv)
 	dzt_proto_printer( res_obj.dztp );
 #endif
 	/*get response param */
-	//res_obj.dztp.param = (get_response_param_tbl[res_obj.type]());
 	res_obj.dztp.param = get_response_param(res_obj);
-	/* TODO:CRC */
-	res_obj.dztp.checkout = 0x5e;
+	/* modify dztp's len */
+	res_obj.dztp.length = (unsigned char)( res_obj.dztp.param.len + 3 );
 	/* transmit it. */
 	int msg_len = res_obj.dztp.param.len +6;
 	unsigned char msg_res[msg_len];
 	dzt_protocol_to_msg(res_obj.dztp,msg_res);
 
-	printf("received recovery message !");
-	msg_printer_format(msg_res);
+	/* TODO:CRC */
+	msg_res[msg_len-2] = get_crc(msg_res, msg_len);
+
 	write(res_obj.fd,msg_res,msg_len);	
 }
-

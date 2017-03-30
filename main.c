@@ -18,24 +18,14 @@
 #define BUF_LEN 204 // dzt_protocol's max length.
 
 
-static void msg_printer_raw(const char* msg, int len)
-{
-	int i = 0;
-	while( i< len){
-		printf("%.4x ",msg[i]);
-		//printf("%.4x,%ld ",msg[i],sizeof(msg[i]));
-		++i;
-	}
-	printf("\n");
-}
 
-static int get_msg(int fd, char *msg, int msg_buf)
+static int get_msg(int fd, unsigned char *msg, int msg_buf)
 {
 	int len, msg_tail;
 	msg_tail = len = 0; 
 
-	char buf[BUF_LEN];
-	char tail;
+	unsigned char buf[BUF_LEN];
+	unsigned char tail;
 	while(msg_tail< msg_buf) {
 		len = read(fd,buf,msg_buf);
 		tail = buf[len-1];
@@ -55,7 +45,7 @@ static int get_msg(int fd, char *msg, int msg_buf)
 
 void main(int argc, char *argv[])
 {
-	char message[BUF_LEN];
+unsigned char message[BUF_LEN];
 	int fd =  open_tty(DEV_NAME);
 	
 	while(1) {
