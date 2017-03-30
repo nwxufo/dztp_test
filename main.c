@@ -28,15 +28,6 @@ static void msg_printer_raw(const char* msg, int len)
 	}
 	printf("\n");
 }
-static void  msg_processor(int fd, const char* msg)
-{
-	struct response_struct res_obj; 
-	res_obj = init_response_struct(fd, msg);
-#ifdef DEBUG
-	dzt_proto_printer( res_obj.dztp );
-#endif
-	msg_response(res_obj);
-}
 
 static int get_msg(int fd, char *msg, int msg_buf)
 {

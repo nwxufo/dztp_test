@@ -37,6 +37,5 @@ extern void msg_response_checkout(struct response_struct res_obj);
 */
 extern void (*msg_response_tbl[])(struct response_struct);
 #define msg_response(z) msg_response_tbl[z.type](z)
-extern struct response_struct init_response_struct( int fd, const char* msg );
-
+extern void  msg_processor(int fd, const char* msg);
 #endif

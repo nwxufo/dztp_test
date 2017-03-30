@@ -64,94 +64,54 @@ static void msg_printer_format(const char* msg)
 }
 
 /* response_pram_recovery */
-static struct cmd_param response_param_recovery = {
-	.len = 1,
-	.param = {0x55},
-};
+static struct cmd_param get_response_param_recovery()
+{
+	struct cmd_param response_param_recovery = {
+		.len = 1,
+		.param = {0x55},
+	};
+	
+	return response_param_recovery;
+}
 /* response_param_version */
-static struct cmd_param response_param_version = {
-	.len = 14,
-	.param = {0x02,0x2c,0x01,0x2c,0x01,0x2c,0x01,0x2c,0x01,0x02,
-		0x12,0x34,0x56,0x78},
-};
+static struct cmd_param get_response_param_version()
+{
+	struct cmd_param response_param_version = {
+		.len = 14,
+		.param = {0x02,0x2c,0x01,0x2c,0x01,0x2c,0x01,0x2c,0x01,0x02,
+			0x12,0x34,0x56,0x78},
+	};
+
+	return response_param_version;
+}
 /* response_param_setting */
-static struct cmd_param response_param_setting = {
-	.len = 1,
-	.param = {0x55},
-};
+static struct cmd_param get_response_param_setting()
+{
+	struct cmd_param response_param_setting = {
+		.len = 1,
+		.param = {0x55},
+	};
 
+	return response_param_setting;
+}
 /*TODO: response_param_checkout */
-static struct cmd_param response_param_checkout = {
-	.len = 10,
-	.param = "UNFINISHED",
+static struct cmd_param get_response_param_checkout() 
+{
+	struct cmd_param response_param_checkout = {
+		.len = 10,
+		.param = "UNFINISHED",
+	};
+
+	return response_param_checkout;
+}
+struct cmd_param (*get_response_param_tbl[]) () = {
+	get_response_param_recovery,
+	get_response_param_version,
+	get_response_param_setting,
+	get_response_param_checkout,
 };
-
-static void dzt_protocol_to_msg(const struct dzt_protocol dztp, unsigned char* msg)
-{
-	 msg[0] = dztp.head;
-	 msg[1] = dztp.length;
-	 msg[2] = dztp.addr;
-	 msg[3] = dztp.cmd;
-	 int i = 0;
-	 int msg_index = 4;
-	 for(i;i<dztp.param.len;i++) {
-		 msg[msg_index] = dztp.param.param[i];
-		 ++msg_index;++i;
-	 }	
-	 msg[msg_index] = dztp.checkout;
-	 msg[msg_index+1] = dztp.end;
-
-}
-static void msg_response_recovery(struct response_struct res_obj)
-{
-	/* this code is ok,but old.
-	unsigned int isSucceed = 1;
-	unsigned char msg_res[7];
-		msg_res[0] = 0x3c;
-		msg_res[1] = 0x04;
-		msg_res[2] = 0x00;
-		msg_res[3] = 0x05;
-		if (isSucceed) {
-			msg_res[4] = 0x55;
-			msg_res[5] = 0x5E;
-		} else {
-			msg_res[4] = 0xAA;
-			msg_res[5] = 0xB3;
-		}
-		msg_res[6] = 0x3E;
-	*/
-	/* param */
-	res_obj.dztp.param = response_param_recovery;
-	/* TODO:CRC */
-	res_obj.dztp.checkout = 0x5e;
-	/* transmit it. */
-	int msg_len = res_obj.dztp.param.len +6;
-	unsigned char msg[msg_len];
-	dzt_protocol_to_msg(res_obj.dztp,msg);
-
-	printf("received recovery message !");
-	msg_printer_format(msg);
-	write(res_obj.fd,msg,msg_len);	
-}
-static void msg_response_version(struct response_struct res_obj) 
-{
-	printf("received version request  message !\n");
-}
-static void msg_response_setting(struct response_struct res_obj)
-{
-	printf("received setting message !\n");
-}
-static void msg_response_checkout(struct response_struct res_obj)
-{
-	printf("received checkout message !\n");
-}
-void (*msg_response_tbl[])(struct response_struct) = {
-	msg_response_recovery,
-	msg_response_version,
-	msg_response_setting,
-	msg_response_checkout
-};
-extern struct response_struct init_response_struct( int fd, const char* msg )
+#define get_response_param(z) get_response_param_tbl[z.type]()
+static struct response_struct init_response_struct( int fd, const char* msg )
 {
 	struct response_struct res_obj;
 	res_obj.fd = fd;
@@ -174,3 +134,25 @@ extern struct response_struct init_response_struct( int fd, const char* msg )
 
 	return res_obj;
 }
+extern void  msg_processor(int fd, const char* msg_recv)
+{
+	struct response_struct res_obj; 
+	res_obj = init_response_struct(fd, msg_recv);
+#ifdef DEBUG
+	dzt_proto_printer( res_obj.dztp );
+#endif
+	/*get response param */
+	//res_obj.dztp.param = (get_response_param_tbl[res_obj.type]());
+	res_obj.dztp.param = get_response_param(res_obj);
+	/* TODO:CRC */
+	res_obj.dztp.checkout = 0x5e;
+	/* transmit it. */
+	int msg_len = res_obj.dztp.param.len +6;
+	unsigned char msg_res[msg_len];
+	dzt_protocol_to_msg(res_obj.dztp,msg_res);
+
+	printf("received recovery message !");
+	msg_printer_format(msg_res);
+	write(res_obj.fd,msg_res,msg_len);	
+}
+
