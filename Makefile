@@ -13,4 +13,5 @@ protocol.o: protocol.c protocol.h
 clean:
 	@echo "cleanning compile object file: -rm main *.o"
 	-rm main *.o
+	-rm *~
 	@echo "clean completed"
