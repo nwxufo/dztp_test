@@ -111,6 +111,22 @@ struct cmd_param (*get_response_param_tbl[]) () = {
 	get_response_param_checkout,
 };
 #define get_response_param(z) get_response_param_tbl[z.type]()
+static void dzt_protocol_to_msg(const struct dzt_protocol dztp, unsigned char* msg)
+{
+	 msg[0] = dztp.head;
+	 msg[1] = dztp.length;
+	 msg[2] = dztp.addr;
+	 msg[3] = dztp.cmd;
+	 int i = 0;
+	 int msg_index = 4;
+	 for(i;i<dztp.param.len;i++) {
+		 msg[msg_index] = dztp.param.param[i];
+		 ++msg_index;++i;
+	 }	
+	 msg[msg_index] = dztp.checkout;
+	 msg[msg_index+1] = dztp.end;
+
+}
 static struct response_struct init_response_struct( int fd, const char* msg )
 {
 	struct response_struct res_obj;
