@@ -113,7 +113,7 @@ static struct cmd_param get_response_param_checkout()
 {
 	struct cmd_param response_param_checkout = {
 		.len = 10,
-		.param = "UNFINISHED",
+		.param = "2170.000",
 	};
 
 	return response_param_checkout;

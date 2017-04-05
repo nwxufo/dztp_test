@@ -4,6 +4,10 @@ Dong Zhong Tong Protocol Test
 	serial port communications. protocol test without 时序，
 $$$$$$$$$$$$$$$
 #########################
+git remote add origin git@github.com:nwxufo/dztp_test.git
+git push -u origin master
+git push origin master
+#########################
 LEARN FORM IT.
 example
  unsigned char c = 0x81;
