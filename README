@@ -1,0 +1,12 @@
+$$$$$$$$$$$$$$$
+Dong Zhong Tong Protocol Test
+	A Simple protocol test between software with a devices.
+	serial port communications. protocol test without 时序，
+$$$$$$$$$$$$$$$
+#########################
+LEARN FORM IT.
+example
+ unsigned char c = 0x81;
+ char c2= 0x81;
+They are stored in diff bytes, 1 vs 4; !!!!!!!!
+but sizeof(c2)'s value is 1.
