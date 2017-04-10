@@ -8,11 +8,6 @@
 #define RESPONSE_H
 
 #include "protocol.h"
-#define BUF_PARAM 199 //MAX protocol's parameter.
-struct cmd_param {
-	int len;
-	unsigned char param[BUF_PARAM];
-};
 
 struct dzt_protocol{
 	unsigned char head;

@@ -6,7 +6,10 @@
  */
 
 #include "response.h"
-#include "stdlib.h"
+#include "dict_res_req.h"
+#include <stdlib.h>
+#include <stdio.h>
+
 #define DEBUG
 extern struct dzt_protocol init_dzt_protocol( const unsigned char *msg )
 {
@@ -71,7 +74,7 @@ extern void msg_printer_raw(const unsigned char* msg, int len)
 }
 
 /* response_pram_recovery */
-static struct cmd_param get_response_param_recovery()
+static struct cmd_param get_response_param_recovery(struct dzt_protocol dztp)
 {
 	struct cmd_param response_param_recovery = {
 		.len = 1,
@@ -81,7 +84,7 @@ static struct cmd_param get_response_param_recovery()
 	return response_param_recovery;
 }
 /* response_param_version */
-static struct cmd_param get_response_param_version()
+static struct cmd_param get_response_param_version(struct dzt_protocol dztp)
 {
 	struct cmd_param response_param_version = {
 		.len = 14,
@@ -99,7 +102,7 @@ static struct cmd_param get_response_param_version()
 	return response_param_version;
 }
 /* response_param_setting */
-static struct cmd_param get_response_param_setting()
+static struct cmd_param get_response_param_setting(struct dzt_protocol dztp)
 {
 	struct cmd_param response_param_setting = {
 		.len = 1,
@@ -109,22 +112,17 @@ static struct cmd_param get_response_param_setting()
 	return response_param_setting;
 }
 /*TODO: response_param_checkout */
-static struct cmd_param get_response_param_checkout() 
+static struct cmd_param get_response_param_checkout(struct dzt_protocol dztp) 
 {
-	struct cmd_param response_param_checkout = {
-		.len = 10,
-		.param = "2170.000",
-	};
-
-	return response_param_checkout;
+	return get_req_res_param(dztp.cmd);
 }
-struct cmd_param (*get_response_param_tbl[]) () = {
+struct cmd_param (*get_response_param_tbl[]) (struct dzt_protocol) = {
 	get_response_param_recovery,
 	get_response_param_version,
 	get_response_param_setting,
 	get_response_param_checkout,
 };
-#define get_response_param(z) get_response_param_tbl[z.type]()
+#define get_response_param(z) get_response_param_tbl[z.type](z.dztp)
 static void dzt_protocol_to_msg(const struct dzt_protocol dztp, unsigned char* msg)
 {
 	 msg[0] = dztp.head;
