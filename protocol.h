@@ -12,5 +12,16 @@ struct cmd_param {
 	int len;
 	unsigned char param[BUF_PARAM];
 };
+struct dzt_protocol{
+	unsigned char head;
+	unsigned char length;
+	unsigned char addr; 
+	unsigned char cmd;
+	struct cmd_param param;
+	unsigned char checkout;
+	unsigned char end;
+};
 
+extern unsigned char get_crc(const unsigned char* msg, const int len);
+extern void dzt_protocol_to_msg(struct dzt_protocol* const dztpp, unsigned char msg[]);
 #endif

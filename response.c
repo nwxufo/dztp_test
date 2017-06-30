@@ -6,6 +6,7 @@
  */
 
 #include "response.h"
+#include "protocol.h"
 #include "dict_res_req.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -123,23 +124,7 @@ struct cmd_param (*get_response_param_tbl[]) (struct dzt_protocol) = {
 	get_response_param_checkout,
 };
 #define get_response_param(z) get_response_param_tbl[z.type](z.dztp)
-static void dzt_protocol_to_msg(const struct dzt_protocol dztp, unsigned char* msg)
-{
-	 msg[0] = dztp.head;
-	 msg[1] = dztp.length;
-	 msg[2] = dztp.addr;
-	 msg[3] = dztp.cmd;
-	 int i = 0;
-	 int msg_index = 4;
-	 for(i;i<dztp.param.len;i++,msg_index++) 
-		 msg[msg_index] = dztp.param.param[i];
-	 	
-	 msg[msg_index] = dztp.checkout;
-	 msg[msg_index+1] = dztp.end;
-#ifdef DEBUG
-	msg_printer_raw(msg,msg_index+2);
-#endif
-}
+
 static struct response_struct init_response_struct( int fd, const char* msg )
 {
 	struct response_struct res_obj;
@@ -163,17 +148,7 @@ static struct response_struct init_response_struct( int fd, const char* msg )
 
 	return res_obj;
 }
-static unsigned char get_crc(const unsigned char* msg, const int len)
-{
-	unsigned char ret_crc = 0x00;
-	int i = 1;
 
-	for ( i; i < len - 2; i++) {
-		ret_crc += msg[i];
-	}
-
-	return ret_crc;
-}
 void  msg_processor(int fd, const unsigned char* msg_recv)
 {
 	struct response_struct res_obj; 
@@ -188,10 +163,10 @@ void  msg_processor(int fd, const unsigned char* msg_recv)
 	/* transmit it. */
 	int msg_len = res_obj.dztp.param.len +6;
 	unsigned char msg_res[msg_len];
-	dzt_protocol_to_msg(res_obj.dztp,msg_res);
+	dzt_protocol_to_msg(&(res_obj.dztp),msg_res);
 
-	/* TODO:CRC */
-	msg_res[msg_len-2] = get_crc(msg_res, msg_len);
+	/* CRC */
+	/*msg_res[msg_len-2] = get_crc(msg_res, msg_len);*/
 
 	write(res_obj.fd,msg_res,msg_len);	
 }

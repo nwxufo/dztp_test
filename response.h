@@ -9,16 +9,6 @@
 
 #include "protocol.h"
 
-struct dzt_protocol{
-	unsigned char head;
-	unsigned char length;
-	unsigned char addr; 
-	unsigned char cmd;
-	struct cmd_param param;
-	unsigned char checkout;
-	unsigned char end;
-};
-
 enum recv_cmd_type  {RECOVERY,VERSION_CHECK,SETTING,CHECKOUT};
 struct response_struct {
 	enum recv_cmd_type type;
