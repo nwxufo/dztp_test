@@ -1,0 +1,13 @@
+dzt_pushmsg: pushmsg.o test_pushmsg.o serial_cfg.o protocol.o
+	gcc test_pushmsg.o serial_cfg.o pushmsg.o protocol.o -o dzt_pushmsg
+	
+test_pushmsg.o: test_pushmsg.c
+	gcc -c test_pushmsg.c -o test_pushmsg.o
+pushmsg.o: pushmsg.c
+	gcc -c pushmsg.c -o pushmsg.o
+serial_cfg.o: serial_cfg.c serial_cfg.h
+	gcc -c serial_cfg.c -o serial_cfg.o
+response.o: response.c response.h
+	gcc -c response.c  -o response.o
+protocol.o: protocol.c protocol.h
+	gcc -c protocol.c -o protocol.o
