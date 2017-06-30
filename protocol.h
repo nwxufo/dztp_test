@@ -7,6 +7,9 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
+#include <stdlib.h>
+#include <stdio.h>
+
 #define BUF_PARAM 199 //MAX protocol's parameter.
 struct cmd_param {
 	int len;
@@ -23,5 +26,6 @@ struct dzt_protocol{
 };
 
 extern unsigned char get_crc(const unsigned char* msg, const int len);
-extern void dzt_protocol_to_msg(struct dzt_protocol* const dztpp, unsigned char msg[]);
+extern size_t dzt_protocol_to_msg(struct dzt_protocol* const dztpp, unsigned char msg[]);
+extern void msg_printer_raw(const unsigned char* msg, int len);
 #endif

@@ -24,6 +24,6 @@ extern void msg_response_checkout(struct response_struct res_obj);
 extern void (*msg_response_tbl[])(struct response_struct);
 #define msg_response(z) msg_response_tbl[z.type](z)
 */
-extern void msg_printer_raw(const unsigned char* msg, int len);
+
 extern void  msg_processor(const int fd, const unsigned char* msg);
 #endif

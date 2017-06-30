@@ -51,28 +51,6 @@ extern void dzt_proto_printer( struct dzt_protocol dztp )
 	printf("%c", dztp.end);
 	printf("\n");
 }
-static void msg_printer_format(const unsigned char* msg) 
-{
-	printf("%c ",msg[0]);
-	printf("%.4x ", msg[1]);
-	int len = (int)msg[1];
-	int i = 0;
-	while( i< len ) {
-		printf("%.4x ",msg[i+2]);
-		i++;
-	}
-	printf("%c\n", msg[len+2]);
-}
-extern void msg_printer_raw(const unsigned char* msg, int len)
-{
-	int i = 0;
-	while( i< len){
-		printf("%.4x ",msg[i]);
-		//printf("%.4x,%ld ",msg[i],sizeof(msg[i]));
-		++i;
-	}
-	printf("\n");
-}
 
 /* response_pram_recovery */
 static struct cmd_param get_response_param_recovery(struct dzt_protocol dztp)

@@ -1,6 +1,9 @@
-main: dict_res_req.o main.o serial_cfg.o  protocol.o response.o
-	gcc main.o serial_cfg.o response.o protocol.o dict_res_req.o -o main
-main.o: main.c 
+target: dzt_response test_pushmsg
+
+dzt_response: dict_res_req.o main.o serial_cfg.o  protocol.o response.o
+	gcc main.o serial_cfg.o response.o protocol.o dict_res_req.o -o dzt_response
+
+test_response.o: main.c 
 	gcc -c main.c -o main.o
 serial_cfg.o: serial_cfg.c serial_cfg.h
 	gcc -c serial_cfg.c -o serial_cfg.o
@@ -11,8 +14,12 @@ protocol.o: protocol.c protocol.h
 dict_res_req.o: dict_res_req.c dict_res_req.h
 	gcc -c dict_res_req.c -o dict_res_req.o
 
+
+
+
+
 clean:
-	@echo "cleanning compile object file: -rm main *.o"
-	-rm main *.o
+	@echo "cleanning compile object file: -rm dzt_response *.o"
+	-rm dzt_* *.o
 	-rm *~
 	@echo "clean completed"
